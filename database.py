@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.docstore.document import Document
 from langchain_community.vectorstores import Milvus
-from sqlmodel import SQLModel, Session, create_engine, desc, select
+from sqlmodel import SQLModel, Session, create_engine, desc, select, func
 
 from models import ChatDocument
 
@@ -67,8 +67,10 @@ def get_chat_document(id: int):
         chat_document = session.get(ChatDocument, id)
         return chat_document
     
-def get_chat_documents(page_number: int, page_size: int, order_by: str = "id", order: Literal["ASC", "DESC"] = "ASC"):
+def get_chat_documents(page_number: int, page_size: int, order_by: str = "id", order: Literal["ASC", "DESC"] = "ASC") -> tuple[list[ChatDocument], int]:
     with Session(engine) as session:
+        # 计算总记录数
+        total_elements = session.exec(select(func.count()).select_from(ChatDocument)).one()
         stmt = select(ChatDocument)
         if order.upper() == "ASC":
             stmt = stmt.order_by(order_by)
@@ -76,7 +78,7 @@ def get_chat_documents(page_number: int, page_size: int, order_by: str = "id", o
             stmt = stmt.order_by(desc(order_by))
         stmt = stmt.offset(page_number * page_size).limit(page_size)
         chat_documents = session.exec(stmt).all()
-        return chat_documents
+        return chat_documents, total_elements
 
 if __name__ == "__main__":
     upsert_chat_document("星穹铁道当前版本为 2.1", 5)
