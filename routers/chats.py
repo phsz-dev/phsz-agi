@@ -18,7 +18,7 @@ from database import get_chat_documents, vector_db
 load_dotenv()
 
 router = APIRouter(
-    prefix="/chats",
+    prefix="/api/chats",
     tags=["chats"],
     responses={404: {"description": "Not found"}},
 )
@@ -26,7 +26,7 @@ router = APIRouter(
 retriever = vector_db.as_retriever()
 
 def format_docs(docs: list[ChatDocument]) -> str:
-    return "\n\n".join([doc.page_content for doc in docs])
+    return "\n\n".join([f"Result {i+1}:\n{doc.page_content}" for i, doc in enumerate(docs)])
 
 # prompt = ChatPromptTemplate(
 #     messages=[
@@ -40,17 +40,22 @@ def format_docs(docs: list[ChatDocument]) -> str:
 #     ]
 # )
 prompt = ChatPromptTemplate.from_messages(
-    [("system", """You are an assistant for question-answering tasks.
+    [("system", """You are a smart QA system for a pet hospital learning system capable of retrieving knowledge from the system's database.
 Use the following pieces of retrieved context to answer the question.
-If you don't know the answer, just say that you don't know.
-Use three sentences maximum and keep the answer concise.
-Context: {context}
+
+Retrieved Context:
+
+{context}
+      
+!!!Important!!!: If the information is not in the retrieved context, state that it is not available in the knowledge base.
+Try keep the answer concise.
+
 Question: {question}
 Answer:""")]
 )
 
 model = ChatOpenAI(
-    model="gpt-3.5-turbo",
+    model="gpt-4-turbo",
     base_url=os.getenv("OPENAI_API_BASE"), streaming=True, verbose=True
 )
 
@@ -70,10 +75,6 @@ async def send_message(content: str) -> AsyncIterable[str]:
 @router.post("/openai")
 async def openai(message: Annotated[str, Body()]):
     return StreamingResponse(send_message(message))
-
-@router.get("/", response_model=list[ChatDocument])
-async def read_chats(pageNum: int = 0, pageSize: int = 10, orderColumn: str = "id", orderType: str = "ASC"):
-    return get_chat_documents(pageNum, pageSize, orderColumn, orderType)
 
 if __name__ == "__main__":
 

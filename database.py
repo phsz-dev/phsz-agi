@@ -39,7 +39,7 @@ def milvus_upsert(id: int, page_content: str):
 def milvus_search(query: str):
     return vector_db.search(query, "similarity")
 
-def upsert_chat_document(page_content: str, id: int = None):
+def upsert_chat_document(page_content: str, id: int = None) -> int:
     with Session(engine) as session:
         if id:
             chat_document = session.get(ChatDocument, id)
@@ -53,11 +53,13 @@ def upsert_chat_document(page_content: str, id: int = None):
         session.flush()
         milvus_upsert(chat_document.id, chat_document.page_content)
         session.commit()
+        return chat_document.id
 
 def delete_chat_document(id: int):
     with Session(engine) as session:
         chat_document = session.get(ChatDocument, id)
-        session.delete(chat_document)
+        if chat_document:
+            session.delete(chat_document)
         session.commit()
 
 def get_chat_document(id: int):

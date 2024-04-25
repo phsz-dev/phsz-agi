@@ -1,6 +1,5 @@
 from dotenv import load_dotenv
 import os
-import socket
 import nacos
 
 load_dotenv()
@@ -15,8 +14,11 @@ client = nacos.NacosClient(SERVER_ADDRESSES, namespace=NAMESPACE)
 # auth mode
 #client = nacos.NacosClient(SERVER_ADDRESSES, namespace=NAMESPACE, ak="{ak}", sk="{sk}")
 
-my_ip = socket.gethostbyname(socket.gethostname())
+# WLAN IP
+my_ip = os.getenv("IP")
 my_port = os.getenv("PORT")
+
+print(my_ip, my_port)
 
 # get config
 data_id = "datasource"

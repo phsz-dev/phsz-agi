@@ -18,9 +18,10 @@ async def lifespan(app: FastAPI):
         scheduler.shutdown()
         nacos_remove()
 
-from routers import chats
+from routers import chats, documents
 
-# app = FastAPI(lifespan=lifespan)
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
+# app = FastAPI()
 
 app.include_router(chats.router)
+app.include_router(documents.router)
