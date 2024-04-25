@@ -1,0 +1,5 @@
+__pycache__
+nacos-data
+
+venv
+.env
